@@ -1,0 +1,19 @@
+<consulta_cliente>
+Nombre: {{ $('12 - Armar contexto para IA').first().json.nombre }}
+Empresa: {{ $('12 - Armar contexto para IA').first().json.empresa }}
+Mensaje:
+{{ $('12 - Armar contexto para IA').first().json.mensaje }}
+</consulta_cliente>
+
+<clasificacion_interna>
+Prioridad: {{ $json.clasificacion.prioridad }}
+Nivel sugerido: {{ $json.clasificacion.nivel_sugerido }}
+Resumen: {{ $json.clasificacion.resumen }}
+Datos que faltan: {{ $json.clasificacion.datos_faltantes.length ? $json.clasificacion.datos_faltantes.join('; ') : 'ninguno' }}
+</clasificacion_interna>
+
+<servicio_del_catalogo>
+{{ $json.servicio_detalle }}
+</servicio_del_catalogo>
+
+Redactá el email y devolvé solo el objeto JSON pedido.

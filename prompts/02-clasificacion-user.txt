@@ -1,0 +1,12 @@
+<catalogo_servicios>
+{{ $('12 - Armar contexto para IA').first().json.catalogo_texto }}
+</catalogo_servicios>
+
+<consulta_cliente>
+Nombre: {{ $('12 - Armar contexto para IA').first().json.nombre }}
+Empresa: {{ $('12 - Armar contexto para IA').first().json.empresa }}
+Mensaje:
+{{ $('12 - Armar contexto para IA').first().json.mensaje }}
+</consulta_cliente>
+
+Clasificá la consulta y devolvé solo el objeto JSON pedido.

@@ -1,0 +1,812 @@
+{
+  "name": "DataPyme - Consultas comerciales (principal)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Parte A — Recepción y registro\nFormulario → validación en servidor → control de duplicados → alta del lead en Airtable.\n\nLas 3 rutas (válido, incompleto, duplicado) terminan en **08 - Registrar ejecución**.",
+        "height": 200,
+        "width": 520,
+        "color": 5
+      },
+      "id": "1cf9a910-1187-4404-be67-93dfd9de7310",
+      "name": "Nota - Parte A",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Consulta comercial - DataPyme Consultores",
+        "formDescription": "Contanos qué necesitás y te respondemos por email. (Proyecto académico: negocio ficticio)",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nombre",
+              "placeholder": "Tu nombre"
+            },
+            {
+              "fieldLabel": "Email",
+              "placeholder": "nombre@empresa.com"
+            },
+            {
+              "fieldLabel": "Empresa",
+              "placeholder": "Nombre de tu empresa (opcional)"
+            },
+            {
+              "fieldLabel": "Mensaje",
+              "fieldType": "textarea",
+              "placeholder": "Qué proceso querés mejorar, con qué herramientas trabajan hoy, plazos..."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7fa19364-f14a-4d05-b02f-7a3f1df8b9f5",
+      "name": "01 - Form: Nueva consulta",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "387babdf-6254-4b01-a8b3-6de86e1022c5"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 02 - Validar y normalizar\n// Valida del lado del servidor, limpia los datos y genera la clave de idempotencia.\nreturn $input.all().map(item => {\n  const d = item.json;\n  const limpiar = v => (v ?? '').toString().trim().replace(/\\s+/g, ' ');\n  const nombre  = limpiar(d['Nombre']);\n  const email   = limpiar(d['Email']).toLowerCase();\n  const empresa = limpiar(d['Empresa']);\n  const mensaje = (d['Mensaje'] ?? '').toString().trim();\n\n  const errores = [];\n  if (nombre.length < 2) errores.push('Nombre vacío o demasiado corto');\n  const emailValido = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(email);\n  if (!email) errores.push('Email vacío');\n  else if (!emailValido) errores.push('Email con formato inválido');\n  if (mensaje.length < 20) errores.push('Mensaje vacío o demasiado corto (mínimo 20 caracteres)');\n  if (mensaje.length > 3000) errores.push('Mensaje demasiado largo (máximo 3000 caracteres)');\n\n  // Huella FNV-1a de email + mensaje: detecta reenvíos idénticos (no es criptográfica).\n  const base = email + '|' + mensaje.toLowerCase().replace(/\\s+/g, ' ');\n  let h = 0x811c9dc5;\n  for (let i = 0; i < base.length; i++) { h ^= base.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }\n  const clave = 'DD-' + h.toString(16).padStart(8, '0') + '-' + base.length;\n\n  return { json: {\n    nombre, email: emailValido ? email : '', email_recibido: email, empresa, mensaje,\n    fecha_recepcion: new Date().toISOString(),\n    es_valido: errores.length === 0, errores, errores_texto: errores.join('; '),\n    clave_dedup: clave\n  }};\n});\n"
+      },
+      "id": "7c696dcc-1f35-4ba9-82ef-f664ee7b9368",
+      "name": "02 - Validar y normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "23016d19-395b-430f-b550-de659dd5fe0a",
+              "leftValue": "={{ $json.es_valido }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "94459c40-a74c-449c-8345-6c6306656ba8",
+      "name": "03 - ¿Datos válidos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "filterByFormula": "={{ \"{Clave_Dedup} = '\" + $json.clave_dedup + \"'\" }}",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "id": "362199db-1cc9-42d8-a78a-6407e5bffef0",
+      "name": "04 - Buscar duplicado",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        -120
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3e1905ae-c2c4-4b09-a4f1-c9996f43ad74",
+              "leftValue": "={{ $json.id ?? '' }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2382f14e-1e35-4419-a21b-99df7cf9f3fa",
+      "name": "05 - ¿Es duplicado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nombre": "={{ $('02 - Validar y normalizar').first().json.nombre }}",
+            "Email": "={{ $('02 - Validar y normalizar').first().json.email }}",
+            "Empresa": "={{ $('02 - Validar y normalizar').first().json.empresa }}",
+            "Mensaje": "={{ $('02 - Validar y normalizar').first().json.mensaje }}",
+            "Fecha_Recepcion": "={{ $('02 - Validar y normalizar').first().json.fecha_recepcion }}",
+            "Estado": "Pendiente",
+            "Clave_Dedup": "={{ $('02 - Validar y normalizar').first().json.clave_dedup }}",
+            "Intentos_IA": "={{ 0 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Empresa",
+              "displayName": "Empresa",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Mensaje",
+              "displayName": "Mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha_Recepcion",
+              "displayName": "Fecha_Recepcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Clave_Dedup",
+              "displayName": "Clave_Dedup",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Intentos_IA",
+              "displayName": "Intentos_IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "0e88da2c-3432-4003-b628-d9d956af5768",
+      "name": "06 - Crear lead (Pendiente)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "df2b70ea-0756-4690-91b6-dd62062e60e3",
+              "name": "lead_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "c3dcd269-fa67-4888-8ed7-d29896b6c985",
+              "name": "etapa",
+              "value": "Lead registrado (Pendiente)",
+              "type": "string"
+            },
+            {
+              "id": "596d4a81-b624-4356-b1bc-dc2843dd0c73",
+              "name": "resultado",
+              "value": "ok",
+              "type": "string"
+            },
+            {
+              "id": "82ea7488-84bd-419e-b8f4-d362593759b6",
+              "name": "detalle",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "794e0ad4-4459-409e-8f11-c7ae541b5a36",
+      "name": "07 - Log: lead creado",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1320,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "05b9e933-89d3-481e-9b1d-db230aaee481",
+              "name": "lead_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "7005251a-e7f3-4fc9-825c-e2d95e8605d5",
+              "name": "etapa",
+              "value": "Control de duplicados",
+              "type": "string"
+            },
+            {
+              "id": "7afef4c4-326d-4db2-9aa6-7d16822b689b",
+              "name": "resultado",
+              "value": "duplicado",
+              "type": "string"
+            },
+            {
+              "id": "5f601ba0-f551-416d-8b0d-a10e2b98758b",
+              "name": "detalle",
+              "value": "=Reenvío idéntico bloqueado. Clave_Dedup: {{ $('02 - Validar y normalizar').first().json.clave_dedup }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fda4ee24-bb15-4c83-9488-ccf53f0d0ec3",
+      "name": "05b - Log: duplicado",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nombre": "={{ $('02 - Validar y normalizar').first().json.nombre }}",
+            "Email": "={{ $('02 - Validar y normalizar').first().json.email }}",
+            "Empresa": "={{ $('02 - Validar y normalizar').first().json.empresa }}",
+            "Mensaje": "={{ $('02 - Validar y normalizar').first().json.mensaje }}",
+            "Fecha_Recepcion": "={{ $('02 - Validar y normalizar').first().json.fecha_recepcion }}",
+            "Estado": "Datos incompletos",
+            "Clave_Dedup": "={{ $('02 - Validar y normalizar').first().json.clave_dedup }}",
+            "Intentos_IA": "={{ 0 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Empresa",
+              "displayName": "Empresa",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Mensaje",
+              "displayName": "Mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha_Recepcion",
+              "displayName": "Fecha_Recepcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Clave_Dedup",
+              "displayName": "Clave_Dedup",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Intentos_IA",
+              "displayName": "Intentos_IA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "69b0c4e8-eddf-4e86-b2b3-3e0e004a2996",
+      "name": "03b - Crear lead (Datos incompletos)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "91436bc2-13ea-479e-a235-b61b05e1ebf0",
+              "name": "lead_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "acdff458-b98f-4b0e-be88-199137e24001",
+              "name": "etapa",
+              "value": "Validación de entrada",
+              "type": "string"
+            },
+            {
+              "id": "f273c696-feb6-417a-a1ad-4cf3b5ce4110",
+              "name": "resultado",
+              "value": "incompleto",
+              "type": "string"
+            },
+            {
+              "id": "64a5ed89-580f-41df-b68d-3df22045a43b",
+              "name": "detalle",
+              "value": "={{ $('02 - Validar y normalizar').first().json.errores_texto }} | Email recibido: {{ $('02 - Validar y normalizar').first().json.email_recibido || '(vacío)' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c9af2438-542b-46eb-9b46-49ee9ca97db8",
+      "name": "03c - Log: datos incompletos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Execution_ID": "={{ $execution.id }}",
+            "Lead": "={{ $json.lead_id ? [$json.lead_id] : [] }}",
+            "Workflow": "principal",
+            "Etapa": "={{ $json.etapa }}",
+            "Resultado": "={{ $json.resultado }}",
+            "Mensaje_Error": "={{ $json.detalle }}",
+            "Fecha": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Execution_ID",
+              "displayName": "Execution_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead",
+              "displayName": "Lead",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Etapa",
+              "displayName": "Etapa",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Resultado",
+              "displayName": "Resultado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Mensaje_Error",
+              "displayName": "Mensaje_Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "b54c5050-c2b8-430b-9173-f5b14edf2d64",
+      "name": "08 - Registrar ejecución",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "01 - Form: Nueva consulta": {
+      "main": [
+        [
+          {
+            "node": "02 - Validar y normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "02 - Validar y normalizar": {
+      "main": [
+        [
+          {
+            "node": "03 - ¿Datos válidos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "03 - ¿Datos válidos?": {
+      "main": [
+        [
+          {
+            "node": "04 - Buscar duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "03b - Crear lead (Datos incompletos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "04 - Buscar duplicado": {
+      "main": [
+        [
+          {
+            "node": "05 - ¿Es duplicado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05 - ¿Es duplicado?": {
+      "main": [
+        [
+          {
+            "node": "05b - Log: duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "06 - Crear lead (Pendiente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "06 - Crear lead (Pendiente)": {
+      "main": [
+        [
+          {
+            "node": "07 - Log: lead creado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "07 - Log: lead creado": {
+      "main": [
+        [
+          {
+            "node": "08 - Registrar ejecución",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05b - Log: duplicado": {
+      "main": [
+        [
+          {
+            "node": "08 - Registrar ejecución",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "03b - Crear lead (Datos incompletos)": {
+      "main": [
+        [
+          {
+            "node": "03c - Log: datos incompletos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "03c - Log: datos incompletos": {
+      "main": [
+        [
+          {
+            "node": "08 - Registrar ejecución",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
