@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>DataPyme · Demo</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f172a;color:#f8fafc;font-family:Segoe UI,Arial,sans-serif}
+  .card{display:none;height:100%;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 8vw;box-sizing:border-box}
+  .card.on{display:flex}
+  .paso{font-size:2.2vw;color:#38bdf8;letter-spacing:.15em;text-transform:uppercase;margin-bottom:2vh}
+  h1{font-size:4.6vw;margin:0 0 3vh;line-height:1.15}
+  p{font-size:2.3vw;color:#cbd5e1;margin:.6vh 0;line-height:1.4;max-width:75vw}
+  .pie{position:fixed;bottom:2vh;right:3vw;font-size:1.2vw;color:#475569}
+</style>
+</head>
+<body>
+
+<div class="card on">
+  <div class="paso">Proyecto final · IA Automation · CoderHouse</div>
+  <h1>DataPyme<br>Ecosistema de automatización IA</h1>
+  <p>Consultas comerciales: el formulario recibe la consulta, Claude la clasifica y redacta la respuesta, un humano la aprueba en Slack y recién ahí se envía por Gmail.</p>
+  <p>n8n · Airtable · Claude · Slack · Gmail</p>
+</div>
+
+<div class="card">
+  <div class="paso">1 · Arquitectura</div>
+  <h1>Diagrama del sistema</h1>
+  <p>Regla principal: ningún email sale sin aprobación humana.</p>
+</div>
+
+<div class="card">
+  <div class="paso">2 · Base de datos</div>
+  <h1>Airtable: la memoria del sistema</h1>
+  <p>5 tablas relacionadas, generadas con Omni AI.</p>
+  <p>Cada consulta tiene un Estado. El catálogo de Servicios es lo único que la IA puede ofrecer.</p>
+</div>
+
+<div class="card">
+  <div class="paso">3 · Trigger</div>
+  <h1>Un cliente completa el formulario público</h1>
+  <p>El flujo arranca solo: valida los datos, controla duplicados y registra el lead.</p>
+</div>
+
+<div class="card">
+  <div class="paso">4 · Orquestación en n8n</div>
+  <h1>Procesamiento con IA</h1>
+  <p>Claude Haiku clasifica la consulta (JSON validado).</p>
+  <p>Claude Sonnet redacta la respuesta (validada, con huella de versión).</p>
+  <p>Si la IA falla: reintentos con tope y el error queda registrado.</p>
+</div>
+
+<div class="card">
+  <div class="paso">5 · Human-in-the-loop</div>
+  <h1>El flujo se detiene y espera la aprobación</h1>
+  <p>Solo el aprobador autorizado puede responder. La solicitud vence a los 45 minutos.</p>
+  <p>Antes de enviar, se verifica que el borrador sea exactamente la versión aprobada.</p>
+</div>
+
+<div class="card">
+  <div class="paso">6 · Resultado final</div>
+  <h1>Email enviado al cliente</h1>
+  <p>El lead pasa a "Enviado", con el hilo de Gmail registrado y el resultado publicado en el hilo de Slack.</p>
+</div>
+
+<div class="card">
+  <div class="paso">7 · Camino infeliz</div>
+  <h1>11 ejecuciones reales de prueba</h1>
+  <p>Datos incompletos · duplicados · error real de la API · respuesta inválida de la IA · rechazo · aprobación vencida.</p>
+  <p>Todas terminaron en el estado esperado. Ningún email salió sin aprobación.</p>
+</div>
+
+<div class="card">
+  <div class="paso">8 · Monitoreo</div>
+  <h1>Dashboard público con KPIs y tasa de errores</h1>
+</div>
+
+<div class="card">
+  <div class="paso">Fin</div>
+  <h1>Gracias</h1>
+  <p>Documentación, workflow JSON, pruebas y evidencias en GitHub:</p>
+  <p>github.com/damian-cordoba/datapyme-ia-automation</p>
+</div>
+
+<div class="pie" id="pie"></div>
+<script>
+  var cards=document.querySelectorAll('.card'),i=0;
+  function show(n){cards[i].classList.remove('on');i=Math.max(0,Math.min(cards.length-1,n));cards[i].classList.add('on');document.getElementById('pie').textContent=(i+1)+' / '+cards.length;}
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1);}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1);}
+  });
+  document.addEventListener('click',function(){show(i+1);});
+  show(0);
+</script>
+</body>
+</html>

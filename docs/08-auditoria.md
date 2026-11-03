@@ -1,6 +1,6 @@
 # Auditoría final: requisitos vs. evidencia
 
-> Fecha: 30/10/2026. **COMPLETO** = implementado y verificado con evidencia · **PENDIENTE** = falta hacerlo.
+> Fecha: 30/10/2026 (actualizada el 03/11/2026 con el video y el repositorio). **COMPLETO** = implementado y verificado con evidencia · **PENDIENTE** = falta hacerlo.
 
 ## 1. Consigna
 
@@ -26,8 +26,8 @@
 | JSON del flujo | `workflow/datapyme-consultas-comerciales.json`, revisado sin secretos | — | COMPLETO |
 | Enlace de solo lectura a la base | Verificado en una ventana de incógnito | `evidence/base-publica-incognito.png` | COMPLETO |
 | Capturas de evidencia | Más de 50 capturas reales con índice | `evidence/README.md` | COMPLETO |
-| Video demo de 3 minutos sin credenciales | Guion listo | `docs/07-guion-video.md` | **PENDIENTE** (grabar y subir) |
-| Repositorio de GitHub | Archivos listos | — | **PENDIENTE** (crear y subir) |
+| Video demo de 3 minutos sin credenciales | Video sin voz con carteles explicativos: trigger, procesamiento en n8n, aprobación en Slack y email final. Grabado sin abrir credenciales ni configuraciones con secretos. Dura 5:50, más que los 3 minutos sugeridos | https://youtu.be/U75VL4reE_o · `docs/07-guion-video.md` | COMPLETO |
+| Repositorio de GitHub | Repositorio público | https://github.com/damian-cordoba/datapyme-ia-automation | COMPLETO |
 
 ## 2. Rúbrica (5 criterios de 20 %)
 

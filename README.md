@@ -14,7 +14,7 @@ Sistema que recibe consultas comerciales, las clasifica y redacta la primera res
 | 📊 **Dashboard de control** | [Tablero de control (KPIs y tasa de errores)](https://airtable.com/appQ2tpIxoHn0JjBS/shrIaxCX7qMLS2HCw) |
 | 🧪 **Pruebas** | [`tests/matriz-pruebas.md`](tests/matriz-pruebas.md): 11 ejecuciones reales, todas con el resultado esperado |
 | 🖼️ **Evidencias** | [`evidence/`](evidence/README.md): capturas reales con índice |
-| 🎬 **Video demostrativo** | *Pendiente: enlace al video* |
+| 🎬 **Video demostrativo** | [YouTube (no listado)](https://youtu.be/U75VL4reE_o): recorrido completo sin voz, con carteles explicativos |
 
 ---
 
@@ -136,5 +136,6 @@ Detalle con entradas, resultados esperados y observados, y evidencias: [`tests/m
 │   ├── datapyme-consultas-comerciales.json   Workflow final (exportado de n8n)
 │   └── historial/                        Versiones intermedias generadas durante la construcción
 ├── tests/matriz-pruebas.md
+├── video/carteles-video.html             Carteles explicativos usados en el video
 └── evidence/                             Capturas reales + índice
 ```
