@@ -1,6 +1,6 @@
 # DataPyme · Ecosistema de automatización IA para consultas comerciales
 
-Proyecto final del curso **IA Automation** (CoderHouse) · Damián Córdoba · Octubre de 2026
+Proyecto final del curso **IA Automation** (CoderHouse) · Damián Cordoba · Octubre de 2026
 
 Sistema que recibe consultas comerciales, las clasifica y redacta la primera respuesta con IA, **espera la aprobación de una persona en Slack** y recién entonces envía el email al cliente. Todo queda registrado en Airtable y se monitorea en un dashboard público.
 
@@ -15,6 +15,20 @@ Sistema que recibe consultas comerciales, las clasifica y redacta la primera res
 | 🧪 **Pruebas** | [`tests/matriz-pruebas.md`](tests/matriz-pruebas.md): 11 ejecuciones reales, todas con el resultado esperado |
 | 🖼️ **Evidencias** | [`evidence/`](evidence/README.md): capturas reales con índice |
 | 🎬 **Video demostrativo** | [YouTube (no listado)](https://youtu.be/U75VL4reE_o): recorrido completo sin voz, con carteles explicativos |
+
+### Vista rápida
+
+**Aprobación humana en Slack:** el borrador redactado por Claude llega al canal con los botones *Aprobar y enviar* y *Rechazar*.
+
+![Solicitud de aprobación en Slack](docs/img/captura-aprobacion-slack.png)
+
+**Workflow en n8n:** recepción y registro (parte A) y procesamiento con IA (parte B).
+
+![Workflow completo en n8n](docs/img/captura-workflow-n8n.png)
+
+**Dashboard de control en Airtable:** ejecuciones, errores, emails enviados y rechazos.
+
+![Dashboard público en Airtable](docs/img/captura-dashboard-airtable.png)
 
 ---
 
